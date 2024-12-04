@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Path, status, HTTPException
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/users", tags=["user"])
@@ -14,7 +14,7 @@ class SignUpResponse(BaseModel):
     username: str = Field(..., max_length=20, min_length=10)
     password: str
 
-@router.post("")
+@router.post("", status_code=status.HTTP_201_CREATED)
 def sign_up_handler(body: SignUpResponse):
     db.append({
         "username": body.username,
@@ -22,19 +22,22 @@ def sign_up_handler(body: SignUpResponse):
     })
     return db
 
-@router.get("/{username}")
+@router.get("/{username}", status_code=status.HTTP_200_OK)
 def get_user_handler(
         username: str = Path(..., max_length=10),
 ):
     for user in db:
         if user["username"] == username:
             return user
-    return {}
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="User not found HaHaHaHaHaHa",
+        )
 
 class UserUpdateResponse(BaseModel):
     password: str
 
-@router.patch("/{username}")
+@router.patch("/{username}", status_code=status.HTTP_200_OK)
 def update_user_handler(
         body: UserUpdateResponse,
         username: str = Path(..., max_length=10),
@@ -43,13 +46,22 @@ def update_user_handler(
         if user["username"] == username:
             user["password"] = body.password
             return user
-    return None
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="User not found HaHaHaHaHaHa",
+        )
 
-@router.delete("/{username}")
+@router.delete("/{username}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user_handler(
         username: str = Path(..., max_length=10),
 ):
     for user in db:
         if user["username"] == username:
             db.remove(user)
-    return db
+            return
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="User not found HaHaHaHaHaHa",
+        )
+
